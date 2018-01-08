@@ -1,0 +1,4 @@
+# Note: you MUST install libgfortran and libopenblas explicitly before numpy
+libgfortran-ng
+libopenblas
+numpy

@@ -6,7 +6,9 @@ the Python distribution for scientific computing by Continuum Analytics. It is b
 distribution, keeping the final slug size as small as possible.
 
 To control the packages installed by conda, supply a `requirements-conda.txt` file (which can be created by
-capturing the output of `conda list -e` for your working conda environment).
+capturing the output of `conda list -e` for your working conda environment). Note that you MUST specify
+libgfortran and libopenblas explicitly in this file for numpy to work properly. See included requirements-conda.txt, which
+can be used as a template.
 
 All other packages can then be installed with a `requirements-pip.txt` file for [pip](https://github.com/pypa/pip)
 to process.  In this way, you can install binary packages via Miniconda for everything you can and
