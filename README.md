@@ -6,8 +6,7 @@ the Python distribution for scientific computing by Continuum Analytics. It is b
 distribution, keeping the final slug size as small as possible.
 
 To control the packages installed by conda, supply a `requirements-conda.txt` file (which can be created by
-capturing the output of `conda list -e` for your working conda environment). To maximize the chances of finding
-the right packages/version number, Conda Forge is automatically added to the list of channels.
+capturing the output of `conda list -e` for your working conda environment).
 
 All other packages can then be installed with a `requirements-pip.txt` file for [pip](https://github.com/pypa/pip)
 to process.  In this way, you can install binary packages via Miniconda for everything you can and
@@ -19,7 +18,7 @@ If you're on a Mac and want to test the scripts locally like I did, you'll need 
 environment as close as possible to a GNU Linux distribution using [Homebrew](https://brew.sh/) with the following
 commands:
 
-1) Fix issues with "date" command:
+1) Fix issues with "date":
 brew install coreutils
 Update your path with PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 
