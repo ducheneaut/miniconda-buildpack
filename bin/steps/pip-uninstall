@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set +e
+# Install dependencies with Pip.
+
+if [[ -f .heroku/pip/requirements-declared.txt ]]; then
+
+  cp .heroku/pip/requirements-declared.txt requirements-declared.txt
+
+  pip-diff --stale requirements-declared.txt requirements-pip.txt --exclude setuptools pip wheel > .heroku/pip/requirements-stale.txt
+
+  rm -fr requirements-declared.txt
+
+  if [[ -s .heroku/pip/requirements-stale.txt ]]; then
+    puts-step "Uninstalling stale dependencies"
+    pip uninstall -r .heroku/pip/requirements-stale.txt -y --exists-action=w | cleanup | indent
+  fi
+fi
+
+set -e

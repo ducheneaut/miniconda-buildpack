@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+
+# Usage:
+#
+#     $ bin/compile <build-dir> <cache-dir> <env-path>
+
+# Fail fast and fail hard.
+set -eo pipefail
+
+# Standard Library.
+export BPLOG_PREFIX="buildpack.miniconda"
+export BUILDPACK_LOG_FILE="${BUILDPACK_LOG_FILE:-/dev/null}"
+
+[ "$BUILDPACK_XTRACE" ] && set -o xtrace
+
+# Prepend proper path for virtualenv hackery. This will be deprecated soon.
+export PATH=":/usr/local/bin:$PATH"
+
+# Paths.
+BIN_DIR=$(cd "$(dirname "$0")"; pwd) # absolute path
+ROOT_DIR=$(dirname "$BIN_DIR")
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+
+export BUILD_DIR CACHE_DIR ENV_DIR
+
+# Utilities.
+# shellcheck source=bin/utils
+source "$BIN_DIR/utils"
+
+# Paths hackery
+APP_DIR="/app"
+deep-mv $BUILD_DIR $APP_DIR
+ORIG_BUILD_DIR=$BUILD_DIR
+BUILD_DIR=$APP_DIR
+
+# Python defaults
+DEFAULT_PYTHON_VERSION="python-3.6.3"
+LATEST_3="python-3.6.3"
+LATEST_2="python-2.7.14"
+
+DEFAULT_PYTHON_STACK="cedar-14"
+PIP_UPDATE="9.0.1"
+
+export DEFAULT_PYTHON_VERSION DEFAULT_PYTHON_STACK PIP_UPDATE LATEST_2 LATEST_3
+
+# Common Problem Warnings
+WARNINGS_LOG=$(mktemp)
+export WARNINGS_LOG
+export RECOMMENDED_PYTHON_VERSION=$DEFAULT_PYTHON_VERSION
+
+# Setup pip-pop (pip-diff)
+export PATH="$PATH:$ROOT_DIR/vendor/pip-pop"
+
+# Support Anvil Build_IDs
+[ ! "$SLUG_ID" ] && SLUG_ID="defaultslug"
+[ ! "$REQUEST_ID" ] && REQUEST_ID="$SLUG_ID"
+[ ! "$STACK" ] && STACK="$DEFAULT_PYTHON_STACK"
+
+# Sanitizing environment variables.
+unset GIT_DIR PYTHONHOME PYTHONPATH
+unset RECEIVE_DATA RUN_KEY BUILD_INFO DEPLOY LOG_TOKEN
+unset CYTOKINE_LOG_FILE GEM_PATH
+
+# Import collection of warnings.
+# shellcheck source=bin/warnings
+source "$BIN_DIR/warnings"
+
+# Set up outputs under new context
+PROFILE_PATH="$BUILD_DIR/.profile.d/miniconda.sh"
+EXPORT_PATH="$BIN_DIR/../export"
+
+# We'll need to send these statics to other scripts we `source`.
+export BUILD_DIR CACHE_DIR BIN_DIR PROFILE_PATH EXPORT_PATH
+
+# Prepend proper environment variables for Python use.
+export PATH="/app/.heroku/miniconda/bin:$PATH"
+export PYTHONUNBUFFERED=1
+export LANG=en_US.UTF-8
+
+# Switch to the repo's context.
+cd "$BUILD_DIR"
+mkdir -p .heroku
+
+# Warn for lack of Procfile.
+if [[ ! -f Procfile ]]; then
+  puts-warn 'Warning: Your application is missing a Procfile. This file tells Heroku how to run your application.'
+  puts-warn 'Learn more: https://devcenter.heroku.com/articles/procfile'
+fi
+
+# Make build subdirectory to be copied to /app when we're done.
+mkdir -p .heroku
+
+# Prepare the cache.
+mkdir -p "$CACHE_DIR"
+
+# Restore old artifacts from the cache.
+cp -R "$CACHE_DIR/.heroku/miniconda" .heroku/ &> /dev/null || true
+cp -R "$CACHE_DIR/.heroku/pip" .heroku/ &> /dev/null || true
+
+# Experimental pre_compile hook.
+# shellcheck source=bin/steps/hooks/pre_compile
+source "$BIN_DIR/steps/hooks/pre_compile"
+
+# If no runtime given, assume default version.
+if [ ! -f runtime.txt ]; then
+  echo "$DEFAULT_PYTHON_VERSION" > runtime.txt
+fi
+
+rm -rf "$BUILD_DIR/.profile.d"
+mkdir -p "$(dirname "$PROFILE_PATH")"
+
+# Install Miniconda.
+let start=$(nowms)
+# shellcheck source=bin/steps/miniconda
+source "$BIN_DIR/steps/miniconda"
+mtime "miniconda.install.time" "${start}"
+
+# Uninstall removed dependencies with Pip.
+let start=$(nowms)
+# shellcheck source=bin/steps/pip-uninstall
+source "$BIN_DIR/steps/pip-uninstall"
+mtime "pip.uninstall.time" "${start}"
+
+# Install dependencies with Pip.
+let start=$(nowms)
+# shellcheck source=bin/steps/pip-install
+source "$BIN_DIR/steps/pip-install"
+mtime "pip.install.time" "${start}"
+
+# Django collectstatic support.
+let start=$(nowms)
+sub_env "$BIN_DIR/steps/collectstatic"
+mtime "collectstatic.time" "${start}"
+
+# Create .profile script for application runtime environment variables.
+set_env PATH "\$HOME/.heroku/miniconda/bin:\$PATH"
+set_env PYTHONUNBUFFERED true
+set_env PYTHONHOME /app/.heroku/miniconda
+
+set_default_env LANG en_US.UTF-8
+set_default_env PYTHONHASHSEED random
+set_default_env PYTHONPATH /app/
+
+# Experimental post_compile hook.
+# shellcheck source=bin/steps/hooks/post_compile
+source "$BIN_DIR/steps/hooks/post_compile"
+
+# Store new artifacts in cache.
+rm -rf "$CACHE_DIR/.heroku"
+mkdir -p "$CACHE_DIR/.heroku"
+cp -R .heroku/miniconda "$CACHE_DIR/.heroku/"
+cp -R .heroku/pip "$CACHE_DIR/.heroku/"
+
+# Paths hackery
+deep-mv $BUILD_DIR $ORIG_BUILD_DIR
+
+# Measure the size of the Miniconda installation.
+# shellcheck disable=SC2119
+mmeasure 'miniconda.size' "$(measure-size)"

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+shopt -s extglob
+shopt -s nullglob
+
+# The standard library.
+if [[ ! -f  "$BUILD_DIR/stdlib/stdlib.sh" ]]; then
+  mkdir -p "$BUILD_DIR/stdlib"
+  curl --retry 3 -s https://lang-common.s3.amazonaws.com/buildpack-stdlib/v8/stdlib.sh > "$BUILD_DIR/stdlib/stdlib.sh"
+fi
+# shellcheck source=/dev/null
+source "$BUILD_DIR/stdlib/stdlib.sh"
+
+# Syntax sugar.
+indent() {
+  sed "s/^/       /"
+}
+
+# Clean up pip output
+cleanup() {
+  sed -e 's/\.\.\.\+/.../g' | sed -e '/already satisfied/Id' | sed -e '/No files were found to uninstall/Id' | sed -e '/Overwriting/Id' | sed -e '/python executable/Id' | sed -e '/no previously-included files/Id'
+}
+
+# Buildpack Steps.
+puts-step() {
+  echo "-----> $*"
+}
+
+# Buildpack Warnings.
+puts-warn() {
+  echo " !     $*"
+}
+
+# Does some serious copying.
+deep-cp() {
+  declare source="$1" target="$2"
+
+  mkdir -p "$target"
+
+  # cp doesn't like being called without source params,
+  # so make sure they expand to something first.
+  # subshell to avoid surprising caller with shopts.
+  (
+    shopt -s nullglob dotglob
+    set -- "$source"/!(tmp|.|..)
+    [[ $# == 0 ]] || cp -a "$@" "$target"
+  )
+}
+
+# Does some serious moving.
+deep-mv() {
+  deep-cp "$1" "$2"
+  deep-rm "$1"
+}
+
+# Does some serious deleting.
+deep-rm() {
+  # subshell to avoid surprising caller with shopts.
+  (
+    shopt -s dotglob
+    rm -rf "$1"/!(tmp|.|..)
+  )
+}
+
+# Measure the size of the Python installation.
+measure-size() {
+  echo "$(du -s .heroku/python 2>/dev/null || echo 0) | awk '{print $1}')"
+}

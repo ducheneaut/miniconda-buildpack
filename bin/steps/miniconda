@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# shellcheck source=bin/utils
+source $BIN_DIR/utils
+
+# Default to Python 3
+PYTHON_VERSION="3"
+
+# Try to parse user-specified Python version from runtime file
+if [ -f runtime.txt ]; then
+    PYTHON_RUNTIME=$(cat runtime.txt)
+    PYTHON_VERSION=`echo $PYTHON_RUNTIME | cut -d \- -f 2 | cut -d . -f 1`    
+fi
+
+puts-step "Preparing Python/Miniconda Environment"
+
+# Grab the correct version of miniconda-latest.sh for the current platform
+# Note that this is mostly for testing on my Mac... Heroku runs Linux
+if [ "$(uname)" == Darwin ]; then
+    get_script="curl -s https://repo.continuum.io/miniconda/Miniconda${PYTHON_VERSION}-latest-MacOSX-x86_64.sh > miniconda-latest.sh"
+else
+    get_script="curl -s https://repo.continuum.io/miniconda/Miniconda${PYTHON_VERSION}-latest-Linux-x86_64.sh > miniconda-latest.sh"
+fi
+
+if [ ! -d .heroku/miniconda ]; then
+    puts-step "Installing new copy of Miniconda"
+    eval $get_script
+    bash miniconda-latest.sh -p .heroku/miniconda -b | indent
+    # Install and pin nomkl to reduce final slug size
+    echo "nomkl" > .heroku/miniconda/conda-meta/pinned
+    conda install nomkl --yes
+    rm -fr miniconda-latest.sh
+
+# Upgrade only when explicitly requested
+elif [ "$MINICONDA_UPGRADE" ]; then
+    puts-step "Upgrading current installation of Miniconda"
+    eval $get_script
+    bash miniconda-latest.sh -p .heroku/miniconda -b -u | indent
+    rm -fr miniconda-latest.sh
+
+else
+    echo "Miniconda already installed from cache. Set MINICONDA_UPGRADE=1 to force an upgrade." | indent
+fi
+
+# Install scientific computing libraries
+# Note that with the current Heroku Cedar stack, it seems the Numpy binaries do not work out-of-the-box
+# You must specify libgfortran-ng and libopenblas in your conda-requirements.txt
+if [ -f requirements-conda.txt ]; then
+    puts-step "Installing dependencies using Conda"
+    conda install --file requirements-conda.txt --yes | indent
+fi
+
+# Clean up the Miniconda installation environment
+puts-step "Cleaning up Miniconda installation"
+conda clean -pt --yes > /dev/null
