@@ -12,7 +12,7 @@ Options:
 """
 import os
 from docopt import docopt
-from pip._vendor.requests import session
+from requests import session
 
 try:  # for pip >= 10
     from pip._internal.req import parse_requirements
