@@ -51,7 +51,7 @@ fi
 # You must specify libgfortran-ng and libopenblas in your conda-requirements.txt
 if [ -f requirements-conda.txt ]; then
     puts-step "Installing dependencies using Conda"
-    conda install --file requirements-conda.txt --yes | indent
+    conda install -c auto --file requirements-conda.txt --yes | indent
 fi
 
 # Clean up the Miniconda installation environment
