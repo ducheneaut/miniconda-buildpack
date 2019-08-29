@@ -43,7 +43,6 @@ class Requirements(object):
                     requirement.req.name = requirement.req.project_name
                 self.requirements.append(requirement.req)
 
-
     def diff(self, requirements, ignore_versions=False, excludes=None):
         r1 = self
         r2 = requirements

@@ -1,4 +1,10 @@
-# Note: you MUST install libgfortran and libopenblas explicitly before numpy
+# Pip tools
+pip-tools
+
+# Scientific computing
 libgfortran-ng
 libopenblas
 numpy
+scipy
+pandas
+scikit-learn
