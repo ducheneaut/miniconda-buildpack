@@ -36,11 +36,11 @@ ORIG_BUILD_DIR=$BUILD_DIR
 BUILD_DIR=$APP_DIR
 
 # Python defaults
-DEFAULT_PYTHON_VERSION="python-3.6.3"
-LATEST_3="python-3.6.3"
+DEFAULT_PYTHON_VERSION="python-3.7.3"
+LATEST_3="python-3.7.3"
 LATEST_2="python-2.7.14"
 
-DEFAULT_PYTHON_STACK="heroku-16"
+DEFAULT_PYTHON_STACK="heroku-18"
 PIP_UPDATE="19.2.3"
 
 # Upgrade Miniconda when new version available
