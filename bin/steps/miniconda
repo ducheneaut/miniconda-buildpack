@@ -33,9 +33,13 @@ if [ ! -d .heroku/miniconda ]; then
 
 # Upgrade only when explicitly requested
 elif [ "$MINICONDA_UPGRADE" ]; then
-    puts-step "Upgrading current installation of Miniconda"
+    puts-step "Deleting existing installation and replacing with latest copy of Miniconda"
+    rm -fr .heroku/miniconda
     eval $get_script
-    bash miniconda-latest.sh -p .heroku/miniconda -b -u | indent
+    bash miniconda-latest.sh -p .heroku/miniconda -b | indent
+    # Install and pin nomkl to reduce final slug size
+    echo "nomkl" > .heroku/miniconda/conda-meta/pinned
+    conda install nomkl --yes
     rm -fr miniconda-latest.sh
 
 else
