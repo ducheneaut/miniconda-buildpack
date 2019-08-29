@@ -32,7 +32,7 @@ if [ ! -d .heroku/miniconda ]; then
     rm -fr miniconda-latest.sh
 
 # Upgrade only when explicitly requested
-elif [ "$MINICONDA_UPGRADE" ]; then
+elif [ "$MINICONDA_UPGRADE" -eq "1" ]; then
     puts-step "Deleting existing installation and replacing with latest copy of Miniconda"
     rm -fr .heroku/miniconda
     eval $get_script
