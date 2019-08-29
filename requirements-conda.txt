@@ -1,6 +1,3 @@
-# Pip tools
-pip-tools
-
 # Scientific computing
 libgfortran-ng
 libopenblas
