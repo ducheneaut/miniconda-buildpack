@@ -14,6 +14,9 @@ All other packages can then be installed with a `requirements-pip.txt` file for 
 to process.  In this way, you can install binary packages via Miniconda for everything you can and
 still use pip for anything you can't.
 
+You must also specify a MINICONDA_UPGRADE=[0 or 1] in your Heroku app's settings. Set to 1, the buildpack will try to reinstall all packages from the latest Miniconda release. Set to 0, the buildpack will simply deploy using the currently cached installation.
+
+
 Note for Mac Developers
 -----------------------
 If you're on a Mac and want to test the scripts locally like I did, you'll need to make your local
