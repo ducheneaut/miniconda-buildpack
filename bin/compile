@@ -19,7 +19,10 @@ export PATH=":/usr/local/bin:$PATH"
 # Paths.
 BIN_DIR=$(cd "$(dirname "$0")"; pwd) # absolute path
 ROOT_DIR=$(dirname "$BIN_DIR")
-BUILD_DIR=$1
+BUILD_DIR=$1  # Should be "/app"
+if [ $BUILD_DIR != "/app" ] then
+   puts-warn 'Heroku buildpacks now build in /app. Make sure the feature is enabled with heroku labs:enable build-in-app-dir -a my_app_name'
+fi
 CACHE_DIR=$2
 ENV_DIR=$3
 
@@ -28,12 +31,6 @@ export BUILD_DIR CACHE_DIR ENV_DIR
 # Utilities.
 # shellcheck source=bin/utils
 source "$BIN_DIR/utils"
-
-# Paths hackery
-APP_DIR="/app"
-deep-mv $BUILD_DIR $APP_DIR
-ORIG_BUILD_DIR=$BUILD_DIR
-BUILD_DIR=$APP_DIR
 
 # Python defaults
 DEFAULT_PYTHON_VERSION="python-3.7.3"
@@ -155,9 +152,6 @@ rm -rf "$CACHE_DIR/.heroku"
 mkdir -p "$CACHE_DIR/.heroku"
 cp -R .heroku/miniconda "$CACHE_DIR/.heroku/"
 cp -R .heroku/pip "$CACHE_DIR/.heroku/"
-
-# Paths hackery
-deep-mv $BUILD_DIR $ORIG_BUILD_DIR
 
 # Measure the size of the Miniconda installation.
 # shellcheck disable=SC2119
