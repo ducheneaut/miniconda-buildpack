@@ -20,7 +20,7 @@ export PATH=":/usr/local/bin:$PATH"
 BIN_DIR=$(cd "$(dirname "$0")"; pwd) # absolute path
 ROOT_DIR=$(dirname "$BIN_DIR")
 BUILD_DIR=$1  # Should be "/app"
-if [ $BUILD_DIR != "/app" ] then
+if [ $BUILD_DIR != "/app" ]; then
    puts-warn 'Heroku buildpacks now build in /app. Make sure the feature is enabled with heroku labs:enable build-in-app-dir -a my_app_name'
 fi
 CACHE_DIR=$2
