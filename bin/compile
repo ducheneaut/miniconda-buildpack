@@ -135,7 +135,7 @@ sub_env "$BIN_DIR/steps/collectstatic"
 mtime "collectstatic.time" "${start}"
 
 # Create .profile script for application runtime environment variables.
-set_env PATH "\$HOME/.heroku/miniconda/bin:\$PATH"
+set_env PATH "\$HOME/.heroku/miniconda/bin:\$HOME/.heroku/node/bin:\$PATH"
 set_env PYTHONUNBUFFERED true
 set_env PYTHONHOME /app/.heroku/miniconda
 
