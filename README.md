@@ -1,4 +1,5 @@
-This package is deprecated and replaced by a [new version](https://github.com/ducheneaut/quantic-buildpack-python)
+This package is deprecated and replaced by a [new version](https://github.com/ducheneaut/quantic-buildpack-miniconda).
+
 
 Conda Buildpack
 ===============
