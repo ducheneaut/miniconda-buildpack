@@ -1,4 +1,4 @@
-This package is deprecated and replaced by a [new version](https://github.com/ducheneaut/quantic-buildpack-miniconda).
+This package is deprecated. It is now possible to deploy scientific computing libraries using Heroku's latest stack.
 
 
 Conda Buildpack
